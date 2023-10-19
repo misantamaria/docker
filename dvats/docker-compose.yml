@@ -1,0 +1,25 @@
+version: "1" 
+services:
+  jupyter:
+      build:
+        context: ./dockerimg
+        dockerfile: ./Dockerfile
+        args:
+          UID: ${USER_ID}
+          GID: ${GROUP_ID}
+          USER: ${USER_NAME}
+      volumes:
+        - ./volume:/home/${USER}/host_data
+      ports:
+        - "${PORT}:8888"
+      expose:
+        - "${PORT}"
+      environment:
+        - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES}
+      deploy:
+        replicas: 1
+        resources:
+          reservations:
+            devices:
+            - driver: nvidia
+              capabilities: [gpu]

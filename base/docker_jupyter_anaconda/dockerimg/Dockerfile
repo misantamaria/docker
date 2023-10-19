@@ -1,24 +1,23 @@
 #############################
 # JUPYTER VOLUME DOCKERFILE #
 #***************************#
-# Set up a jupyter-lab for  #
-# developing using deepvats #
+# Enables:                  #
+# Jupyter Lab               #
+# Anaconda                  #
 #############################
-
-ARG docker_path=~/docker_basic/jupyter_basic/dockerimg/
+ARG docker_path=./dockerimg/
 
 ##############
 # Base image #
 ##############
 ##--- Setup Ubuntu
-#ARG CUDA_VERSION=12.0.1-cudnn8-runtime-ubuntu22.04
-#ARG CUDA_VERSION=12.0.1-devel-ubuntu22.04  
-#ARG CUDA_VERSION=12.0.1-cudnn8-runtime-ubuntu22.04
 ARG CUDA_VERSION=12.2.0-devel-ubuntu20.04
-
+#ARG CUDA_VERSION=12.2.0-runtime-ubuntu20.04
+#ARG CUDA_VERSION=12.2.0-base-ubuntu20.04
 FROM nvidia/cuda:${CUDA_VERSION}
+
 #--- Tags
-LABEL maintainer="vrodriguezf <victor.rfernandez@upm.es>"
+LABEL maintainer="misantamaria <mi.santamaria@upm.es>"
 LABEL cuda_version=${CUDA_VERSION}
 ##---Initialize bash
 SHELL [ "/bin/bash", "--login", "-c" ]
@@ -28,12 +27,8 @@ SHELL [ "/bin/bash", "--login", "-c" ]
 ##################
 RUN apt-get update --fix-missing \
     && apt-get install -y wget bzip2 curl git sudo \
-    #libarchive-dev libtiff5-dev \
     && apt-get clean  \
     && rm -rf /var/lib/apt/lists/*
-#-- Environmental variables for wandb
-ENV LC_ALL=C.UTF-8
-ENV LANG=C.UTF-8
 
 ########################
 # Create non-root user #
@@ -96,6 +91,9 @@ COPY --chown=$UID:$GID ${docker_path}environment.yml ${docker_path}requirements.
 RUN mamba env create --prefix $ENV_PREFIX --file /tmp/environment.yml --force  \ 
     && conda clean --all --yes
 
+################
+# Final Setups #
+################
 
 # run the postBuild script to install the JupyterLab extensions
 COPY --chown=$UID:$GID ${docker_path}postBuild /usr/local/bin
@@ -106,36 +104,13 @@ RUN chmod u+x /usr/local/bin/postBuild \
     # Make bash automatically activate the conda environment
     && echo "conda activate $ENV_PREFIX" >> ~/.bashrc
 
-###########################
-# Editable packages (pip) #
-########################### 
-
-RUN mkdir /home/$USER/lib \
-    && conda activate $ENV_PREFIX \
-    && cd /home/$USER/lib \
-    # Install tsai (v0.3.5)
-    && rm -rf tsai \
-    && git clone -b 0.3.5 --single-branch https://github.com/timeseriesAI/tsai.git \
-    && cd tsai \ 
-    && pip install --no-deps -e . \
-    && conda deactivate
-    # Install ORELM
-#RUN cd /home/$USER/lib \
- #   && rm -rf orelm \
-  #  && git clone --single-branch https://github.com/chickenbestlover/Online-Recurrent-Extreme-Learning-Machine \
-   # && mv Online-Recurrent-Extreme-Learning-Machine orelm \
-   # && conda deactivate
-
-
-
-
 COPY --chown=$UID:$GID ${docker_path}entrypoint.sh /usr/local/bin
 RUN chmod u+x /usr/local/bin/entrypoint.sh
 
+# Enable entrypoint
 run id -u
 RUN chmod 777 $ENV_PREFIX/include
 ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]
 
-
-# default command will be to launch JupyterLab server for development
+# Open Jupyter lab!
 CMD [ "jupyter", "lab", "--no-browser", "--ip", "0.0.0.0", "--ContentsManager.allow_hidden=True"]

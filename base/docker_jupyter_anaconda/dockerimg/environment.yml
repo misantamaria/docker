@@ -1,0 +1,10 @@
+channels:
+  - pytorch
+  - defaults
+  - nvidia
+
+dependencies:
+  - cuda-toolkit=12.2
+  - python=3.10
+  - pytorch
+  - jupyterlab

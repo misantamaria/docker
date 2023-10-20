@@ -1,0 +1,41 @@
+version: "1" 
+services:
+  jupyter:
+      build:
+        context: ./dockerimg
+        dockerfile: ./Dockerfile
+        args:
+          UID: ${USER_ID}
+          GID: ${GROUP_ID}
+          USER: ${USER_NAME}
+      volumes:
+        - ../:/home/user/work
+        - ./volume:/home/user/host_data
+        - conda-env:/home/$USER/env
+        - miniconda:/home/$USER/miniconda3
+        - lib:/home/$USER/lib
+      ports:
+        - "${JUPYTER_PORT}:8888"
+      expose:
+        - "${JUPYTER_PORT}"
+      environment:
+        - WANDB_ENTITY=${WANDB_ENTITY}
+        - WANDB_PROJECT=${WANDB_PROJECT}
+        - WANDB_API_KEY=${WANDB_API_KEY} #*
+        - GH_TOKEN=${GH_TOKEN} #*
+        - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES}
+        - WANDB_DIR=/home/${USER_NAME}/work
+        - USER_NAME=${USER_NAME}
+        - GROUP_ID=${GROUP_ID}
+        - USER_ID=${USER_ID}
+      deploy:
+        replicas: 1
+        resources:
+          reservations:
+            devices:
+            - driver: nvidia
+              capabilities: [gpu]
+volumes:
+  conda-env:
+  miniconda:
+  lib:

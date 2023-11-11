@@ -1,0 +1,40 @@
+version: "1"
+services:
+  r-studio:
+      build:
+        context: ../
+        dockerfile: docker/dockerimg/Dockerfile
+        args:
+          UID: ${USER_ID}
+          GID: ${GROUP_ID}
+          USER: ${USER_NAME}
+          RETICULATE_PYTHON_ENV: /home/${USER_NAME}/env
+          RETICULATE_MINICONDA_PATH: /home/${USER_NAME}/miniconda3
+      volumes:
+        - ../data:/home/${USER}/host_data
+        - ../r_shiny_app:/home/${USER_NAME}/app #*
+        - conda-env:/home/${USER_NAME}/env
+        - miniconda:/home/${USER_NAME}/miniconda3
+        - lib:/home/${USER_NAME}/lib
+      ports:
+        - "${PORT}:8787"
+      expose:
+        - "${PORT}"
+      environment:
+#        - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES}
+        - USER=${USER_NAME} #* 
+        - USERID=${USER_ID} #*
+        - GROUPID=${GROUP_ID} #*
+        - ROOT=FALSE
+        - PASSWORD=${RSTUDIO_PASSWD} #*
+      deploy:
+        replicas: 1
+#        resources:
+#          reservations:
+#            devices:
+#             - driver: nvidia
+#               capabilities: [gpu]
+volumes:
+  conda-env:
+  miniconda:
+  lib:

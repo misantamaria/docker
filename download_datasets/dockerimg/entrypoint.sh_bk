@@ -1,0 +1,9 @@
+#!/bin/bash --login
+set -e
+conda activate $ENV_PREFIX
+echo 'about to get /home/'$USER'/work file list'
+ls /home/$USER/work
+echo 'install work'
+pip install -e /home/$USER/work
+echo 'go exec!'
+exec "$@"

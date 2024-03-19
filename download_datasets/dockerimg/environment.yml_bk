@@ -1,0 +1,31 @@
+channels:
+  - pytorch-nightly #TODO: As soon as pytorch for cuda 12.2 stable version is out, pytorch channel shpuld be used instead of nightly version
+  - nvidia/label/cuda-12.2.0
+  - nvidia
+  - conda-forge
+  #- pytorch
+  - defaults
+dependencies:
+  ################### #######
+  # Generic configurations #
+  ##########################
+  - nano
+  ##--- Python
+  - python=3.10
+  #---Jupyter
+  - ipywidgets
+  - jupyterlab
+  - nbclassic>=0.2.8
+  #--- Prerequisites
+  ##############
+  # CUDA & GPU #
+  ##############
+  #- nvidia/label/cuda-12.2.0::cuda-toolkit=12.2.0
+  - cuda-toolkit #-- es el 12.1. El 12.2 no parece ir bien todavía con pytorch
+  ############
+  # Specific #
+  ############
+  - numpy #Necesasry for pytorch
+  #--- Torch
+  - pytorch
+  - pytorch-cuda=12.1 #

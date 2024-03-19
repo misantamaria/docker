@@ -1,0 +1,40 @@
+channels:
+  #Torch & Cuda
+  - pytorch
+  - nvidia
+  #Generic
+  - conda-forge
+  - defaults
+  #AI
+  - fastai
+  - rapidsai
+dependencies:
+  ##########################
+  # Generic configurations #
+  ##########################
+  - nano
+  #--- github
+  - gh 
+  ##--- Python
+  - python=3.10
+  - pip
+  #---Jupyter
+  - ipywidgets
+  - jupyterlab
+  
+  ##############
+  # CUDA & GPU #
+  ##############
+  - nvidia::cuda-toolkit=11.6=0
+  - rapidsai::cudf=23.02=cuda_11_py310_g5ad4a85b9d_0
+  - rapidsai::cuml=23.02=cuda11_py310_g3356f05bd_0
+  - genv=1.2.0=pyhd8ed1ab_0
+
+  ############
+  # Specific #
+  ############
+  - numpy #Necesasry for pytorch
+  #--- Torch
+  - pytorch=1.13=py3.10_cuda11.7_cudnn8.5.0_0
+  #- pytorch-nightly::pytorch-cuda=12.1=ha16c6d3_5 #
+  - wandb=0.14.2

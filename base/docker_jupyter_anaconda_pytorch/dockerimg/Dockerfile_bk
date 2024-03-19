@@ -1,0 +1,57 @@
+#############################
+# JUPYTER VOLUME DOCKERFILE #
+#############################
+#--- Log for saving docker main info
+ARG log_path=~/dockerfile_jupyter.logs
+##############
+# Base image #
+##############
+##--- Setup Ubuntu
+ARG CUDA_VERSION=12.2.0-devel-ubuntu20.04
+##--- Set base image
+FROM nvidia/cuda:${CUDA_VERSION}
+
+#--- Tags
+LABEL maintainer="misantamaria <mi.santamaria@upm.es>"
+LABEL cuda_version=${CUDA_VERSION}
+LABEL log_path=${log_path}
+
+
+##################
+# Packages setup #
+##################
+RUN apt-get update --fix-missing \
+    && apt-get install -y wget bzip2 curl git sudo libarchive-dev libtiff5-dev \
+    && apt-get clean  \
+    && rm -rf /var/lib/apt/lists/*
+
+#-- Environmental variables for wandb
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
+
+##################
+# Packages setup #
+##################s
+RUN apt-get update
+RUN apt-get install -y python3
+RUN apt-get install -y python3-pip
+
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
+RUN pip3 install jupyter
+RUN pip3 install jupyterlab
+
+RUN addgroup --gid $GID $USER
+RUN adduser --disabled-password --gecos '' --uid $UID --gid $GID $USER
+
+USER $USER
+WORKDIR /home/$USER
+
+COPY requirements.txt /home/$USER
+
+RUN pip3 install torch==1.13.1+cu116 torchvision==0.14.1+cu116 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu116
+RUN pip3 install pyg-lib torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric -f https://data.pyg.org/whl/torch-1.13.0+cu116.html
+RUN pip3 install -r requirements.txt
+
+WORKDIR /home/$USER
+CMD ["bash", "-c", "source /etc/bash.bashrc && jupyter lab --ip 0.0.0.0 --no-browser"]

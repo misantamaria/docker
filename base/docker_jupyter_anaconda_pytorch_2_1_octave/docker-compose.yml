@@ -11,9 +11,8 @@ services:
       volumes:
         - ./work/:/home/${USER_NAME}/work
         - ./volume:/home/${USER_NAME}/host_data
-        - conda-env:/home/$USER/env
-        - miniconda:/home/$USER/miniconda3
-        - lib:/home/$USER/lib
+        - conda-env:/usr/local/share/miniconda3/envs/env
+        - miniconda:/usr/local/share/miniconda3
       ports:
         - "${JUPYTER_PORT}:8888"
       expose:

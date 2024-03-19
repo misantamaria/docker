@@ -4,6 +4,7 @@
 # Enables:                  #
 # Jupyter Lab               #
 # Anaconda                  #
+# Octave                    #
 #############################
 ARG docker_path=./dockerimg/
 
@@ -28,9 +29,10 @@ SHELL [ "/bin/bash", "--login", "-c" ]
 ARG TZ=Etc/UTC 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone \
     && apt-get update --fix-missing \
-    && apt-get install -y wget bzip2 curl git sudo libarchive-dev libtiff5-dev\
+    && apt-get install -y wget bzip2 curl git sudo libarchive-dev libtiff5-dev libgl1-mesa-glx \
     && apt-get clean  \
     && rm -rf /var/lib/apt/lists/*
+
 
 ##################################
 # Get user environment variables #
@@ -57,8 +59,6 @@ RUN addgroup --gid $GID $USER  \
     --gid $GID \
     --home $HOME $USER\
     && echo "$USER ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-#-- Move to user
-USER $USER
 
 # Add the jupyterlab settings
 COPY --chown=$UID:$GID ${docker_path}jupyter_config $HOME/.jupyter
@@ -68,39 +68,36 @@ COPY --chown=$UID:$GID ${docker_path}jupyter_config $HOME/.jupyter
 #####################
 
 ENV MINICONDA_VERSION=4.10.3 \ 
-    CONDA_DIR=$HOME/miniconda3 \
+    CONDA_DIR=/usr/local/share/miniconda3 
     # Make non-activate conda commands available
-    PATH=$CONDA_DIR/bin:$PATH \
+ENV PATH=$CONDA_DIR/bin:$PATH \
+    ENV_PREFIX=${CONDA_DIR}/envs/env \
     PROJECT_DIR=$HOME 
 
 RUN echo "HOME: ${HOME} | CONDA_DIR = ${CONDA_DIR}" \
     #-- Install MINICONDA
-    && wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-py38_$MINICONDA_VERSION-Linux-x86_64.sh -O ~/miniconda.sh  \
-    && chmod +x ~/miniconda.sh  \
-    && ~/miniconda.sh -b -p $CONDA_DIR  \
-    && rm ~/miniconda.sh \
+    && wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-py38_$MINICONDA_VERSION-Linux-x86_64.sh -O  /usr/local/share/miniconda.sh  \
+    && chmod +x  /usr/local/share/miniconda.sh  \
+    && /usr/local/share/miniconda.sh -b -p $CONDA_DIR  \
+    && rm /usr/local/share/miniconda.sh \
     # Make conda activate command available from /bin/bash --login shells
-    && echo ". $CONDA_DIR/etc/profile.d/conda.sh" >> ~/.profile 
+    && echo ". $CONDA_DIR/etc/profile.d/conda.sh" >> /usr/local/share/.profile 
     # make conda activate command available from /bin/bash --interative shells
 RUN conda init bash \
     # create a project directory inside user home
     && mkdir -p $PROJECT_DIR
     
-WORKDIR $PROJECT_DIR
+WORKDIR /usr/local/share
 ##########################
 # Install & update MAMBA #
 ########################## 
-ENV ENV_PREFIX $PROJECT_DIR/env
 
-RUN conda install --name base --channel conda-forge mamba \
-    #sudo apt-get update -y
-    && mamba update --name base --channel defaults conda 
-#-- Build the mamba environment
 COPY --chown=$UID:$GID ${docker_path}environment.yml ${docker_path}requirements.txt /tmp/
 
-RUN mamba env create --prefix $ENV_PREFIX --file /tmp/environment.yml --force  \ 
+RUN conda install --name base --channel conda-forge mamba \
+    && mamba update --name base --channel defaults conda \
+    && mamba env create --prefix ${ENV_PREFIX} --file /tmp/environment.yml \
     && conda clean --all --yes
-
 
 ################
 # Final Setups #
@@ -112,6 +109,11 @@ COPY --chown=$UID:$GID ${docker_path}entrypoint.sh /usr/local/bin
 RUN chmod u+x /usr/local/bin/entrypoint.sh \
     && id -u \
     && chmod 777 $ENV_PREFIX/include
+
+#-- Move to user
+USER $USER
+
+WORKDIR $PROJECT_DIR
 
 ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]
 # Open Jupyter lab!
